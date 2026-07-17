@@ -21,6 +21,27 @@ pip install -r requirements.txt
 python main.py
 ```
 
+## Gerar executável (Windows)
+
+Usamos [PyInstaller](https://pyinstaller.org/) para empacotar o app em um `.exe` único,
+sem precisar de Python instalado na máquina de destino.
+
+```
+pip install pyinstaller
+pyinstaller --noconfirm --onefile --windowed --name "md++" --collect-all customtkinter main.py
+```
+
+- `--onefile`: gera um único `md++.exe` em vez de uma pasta com vários arquivos.
+- `--windowed`: não abre um console junto com a janela do app.
+- `--collect-all customtkinter`: garante que os temas/assets do CustomTkinter (arquivos
+  `.json` de tema) vão junto no pacote — sem isso o `.exe` roda mas quebra na hora de
+  aplicar o tema.
+
+O executável fica em `dist/md++.exe`. As pastas `build/` e `dist/` geradas nesse processo
+já estão no `.gitignore`, não sobem para o repositório.
+
+Para adicionar um ícone customizado, inclua `--icon=caminho\para\icone.ico` no comando.
+
 ## Versionamento
 
 Gestão de mudanças e versionamento: neste repositório GitHub.
