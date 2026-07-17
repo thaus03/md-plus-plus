@@ -1,5 +1,14 @@
 import os
+import sys
 from tkinter import filedialog, messagebox
+
+# Builds com --windowed não têm console: sys.stdout/stderr ficam None, e o
+# customtkinter escreve um aviso em stderr no import, o que quebra o app antes
+# da janela abrir se não houver um stream (mesmo que descartável) pra receber.
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w")
 
 import customtkinter as ctk
 import markdown
