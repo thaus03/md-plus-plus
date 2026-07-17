@@ -28,11 +28,15 @@ sem precisar de Python instalado na máquina de destino.
 
 ```
 pip install pyinstaller
-pyinstaller --noconfirm --onefile --windowed --name "md++" --collect-all customtkinter main.py
+pyinstaller --noconfirm --onefile --windowed --name "md++" --paths src --collect-all customtkinter main.py
 ```
 
 - `--onefile`: gera um único `md++.exe` em vez de uma pasta com vários arquivos.
 - `--windowed`: não abre um console junto com a janela do app.
+- `--paths src`: o `main.py` só adiciona `src/` ao `sys.path` em tempo de execução, mas o
+  PyInstaller decide o que empacotar a partir de uma análise estática que roda *antes*
+  disso — sem essa flag ele não enxerga o pacote `mdpp` e o `.exe` falha com
+  `ModuleNotFoundError: No module named 'mdpp'`.
 - `--collect-all customtkinter`: garante que os temas/assets do CustomTkinter (arquivos
   `.json` de tema) vão junto no pacote — sem isso o `.exe` roda mas quebra na hora de
   aplicar o tema.
