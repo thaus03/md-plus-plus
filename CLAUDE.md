@@ -25,7 +25,10 @@ Enquanto o app for pequeno, não dividir em mais módulos/camadas do que o neces
 
 - Busca dentro do arquivo
 - Atalhos de teclado adicionais
-- Preview renderizado de Markdown (hoje é só edição de texto puro)
+
+Já implementado: alternância edição/preview (botão na toolbar, renderiza com `markdown` +
+`tkinterweb`, motor Tkhtml3 — trocado do `tkhtmlview` inicial por falta de suporte real a
+CSS/tabelas) e caminho absoluto na barra de título.
 
 ## Versionamento
 
@@ -33,7 +36,8 @@ Todo o histórico de mudanças vive no GitHub — **não crie arquivos de change
 release no repo**, o log de commits e PRs é a fonte da verdade.
 
 - Repo: https://github.com/thaus03/md-plus-plus
-- Commits em português, mensagens curtas no imperativo (ex: "Adiciona busca no editor").
+- Commits: Conventional Commits, corpo em português (`feat(preview): adiciona busca no
+  editor`) — convenção geral em `~/.claude/CLAUDE.md`, não repetir aqui.
 - Não fazer commit/push sem o usuário pedir explicitamente nesta sessão.
 - Não criar arquivos de documentação de produto/arquitetura soltos neste repo; esse
   contexto é mantido fora daqui.
