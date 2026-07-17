@@ -4,6 +4,13 @@ Editor leve de arquivos Markdown para Windows, feito em Python.
 
 Alternativa mais leve ao VS Code para quem só precisa visualizar e editar `.md`.
 
+## Funcionalidades
+
+- Abrir, editar, salvar e criar arquivos `.md`.
+- Botão **Visualizar/Editar** na barra de ferramentas para alternar entre o texto puro e
+  o Markdown renderizado (títulos, negrito, itálico, listas, código, tabelas, links).
+- Barra de título mostra o caminho absoluto do arquivo aberto.
+
 ## Requisitos
 
 - Python 3.11+
@@ -28,7 +35,7 @@ sem precisar de Python instalado na máquina de destino.
 
 ```
 pip install pyinstaller
-pyinstaller --noconfirm --onefile --windowed --name "md++" --paths src --collect-all customtkinter main.py
+pyinstaller --noconfirm --onefile --windowed --name "md++" --paths src --collect-all customtkinter --collect-all markdown main.py
 ```
 
 - `--onefile`: gera um único `md++.exe` em vez de uma pasta com vários arquivos.
@@ -40,6 +47,10 @@ pyinstaller --noconfirm --onefile --windowed --name "md++" --paths src --collect
 - `--collect-all customtkinter`: garante que os temas/assets do CustomTkinter (arquivos
   `.json` de tema) vão junto no pacote — sem isso o `.exe` roda mas quebra na hora de
   aplicar o tema.
+- `--collect-all markdown`: a lib `markdown` carrega suas extensões (`fenced_code`,
+  `tables`, `sane_lists`) dinamicamente por nome de módulo, algo que a análise estática do
+  PyInstaller não enxerga sozinha — sem essa flag o preview quebra com
+  `ModuleNotFoundError: No module named 'markdown.extensions.fenced_code'`.
 
 O executável fica em `dist/md++.exe`. As pastas `build/` e `dist/` geradas nesse processo
 já estão no `.gitignore`, não sobem para o repositório.

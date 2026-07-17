@@ -25,7 +25,9 @@ Enquanto o app for pequeno, não dividir em mais módulos/camadas do que o neces
 
 - Busca dentro do arquivo
 - Atalhos de teclado adicionais
-- Preview renderizado de Markdown (hoje é só edição de texto puro)
+
+Já implementado: alternância edição/preview (botão na toolbar, renderiza com `markdown` +
+`tkhtmlview`) e caminho absoluto na barra de título.
 
 ## Versionamento
 
