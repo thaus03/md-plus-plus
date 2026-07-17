@@ -3,11 +3,42 @@ from tkinter import filedialog, messagebox
 
 import customtkinter as ctk
 import markdown
-from tkhtmlview import HTMLScrolledText
+from tkinterweb import HtmlFrame
 
 APP_TITLE = "md++"
 FILETYPES = [("Markdown", "*.md *.markdown"), ("Todos os arquivos", "*.*")]
 MARKDOWN_EXTENSIONS = ["fenced_code", "tables", "sane_lists"]
+
+PREVIEW_STYLE = """
+body {
+    background-color: #1e1e1e;
+    color: #dcdcdc;
+    font-family: "Segoe UI", Calibri, sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
+    padding: 4px 18px 18px 18px;
+}
+h1, h2, h3, h4, h5, h6 { color: #ffffff; }
+h1 { border-bottom: 1px solid #3a3a3a; padding-bottom: 6px; }
+code {
+    font-family: Consolas, "Courier New", monospace;
+    background-color: #2d2d2d;
+    color: #d4d4d4;
+    padding: 1px 4px;
+}
+pre { background-color: #2d2d2d; padding: 10px; }
+pre code { background-color: transparent; padding: 0; }
+table { border-collapse: collapse; margin: 10px 0; }
+th, td { border: 1px solid #3a3a3a; padding: 6px 12px; text-align: left; }
+th { background-color: #2a2a2a; }
+a { color: #4ea1ff; }
+blockquote {
+    border-left: 3px solid #4a4a4a;
+    margin-left: 0;
+    padding-left: 12px;
+    color: #b0b0b0;
+}
+"""
 
 
 class MdPlusPlusApp(ctk.CTk):
@@ -47,7 +78,7 @@ class MdPlusPlusApp(ctk.CTk):
         self.textbox.pack(side="top", fill="both", expand=True)
         self.textbox.bind("<<Modified>>", self._on_modified)
 
-        self.preview = HTMLScrolledText(self.editor_container, html="")
+        self.preview = HtmlFrame(self.editor_container, messages_enabled=False, javascript_enabled=False)
 
         self.bind_all("<Control-o>", lambda e: self.open_file())
         self.bind_all("<Control-s>", lambda e: self.save_file())
@@ -60,9 +91,7 @@ class MdPlusPlusApp(ctk.CTk):
             self._show_editor()
 
     def _show_preview(self):
-        content = self.textbox.get("1.0", "end-1c")
-        html = markdown.markdown(content, extensions=MARKDOWN_EXTENSIONS)
-        self.preview.set_html(html)
+        self._render_preview()
         self.textbox.pack_forget()
         self.preview.pack(side="top", fill="both", expand=True)
         self.mode = "preview"
@@ -77,9 +106,12 @@ class MdPlusPlusApp(ctk.CTk):
 
     def _refresh_preview_if_active(self):
         if self.mode == "preview":
-            content = self.textbox.get("1.0", "end-1c")
-            html = markdown.markdown(content, extensions=MARKDOWN_EXTENSIONS)
-            self.preview.set_html(html)
+            self._render_preview()
+
+    def _render_preview(self):
+        content = self.textbox.get("1.0", "end-1c")
+        body = markdown.markdown(content, extensions=MARKDOWN_EXTENSIONS)
+        self.preview.load_html(f"<style>{PREVIEW_STYLE}</style>{body}")
 
     def _on_modified(self, _event=None):
         widget = self.textbox._textbox

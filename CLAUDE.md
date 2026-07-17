@@ -27,7 +27,8 @@ Enquanto o app for pequeno, não dividir em mais módulos/camadas do que o neces
 - Atalhos de teclado adicionais
 
 Já implementado: alternância edição/preview (botão na toolbar, renderiza com `markdown` +
-`tkhtmlview`) e caminho absoluto na barra de título.
+`tkinterweb`, motor Tkhtml3 — trocado do `tkhtmlview` inicial por falta de suporte real a
+CSS/tabelas) e caminho absoluto na barra de título.
 
 ## Versionamento
 

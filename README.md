@@ -30,12 +30,12 @@ python main.py
 
 ## Gerar executável (Windows)
 
-Usamos [PyInstaller](https://pyinstaller.org/) para empacotar o app em um `.exe` único,
-sem precisar de Python instalado na máquina de destino.
+Usamos [PyInstaller](https://pyinstaller.org/) para empacotar o app, sem precisar de
+Python instalado na máquina de destino.
 
 ```
 pip install pyinstaller
-python -m PyInstaller --noconfirm --onefile --windowed --name "md++" --paths src --collect-all customtkinter --collect-all markdown --collect-all tkhtmlview main.py
+python -m PyInstaller --noconfirm --onedir --windowed --name "md++" --paths src --collect-all customtkinter --collect-all markdown --collect-all tkinterweb --collect-all tkinterweb_tkhtml main.py
 ```
 
 - Rode como `python -m PyInstaller`, não como o comando solto `pyinstaller`. Se você tiver
@@ -44,7 +44,10 @@ python -m PyInstaller --noconfirm --onefile --windowed --name "md++" --paths src
   requirements.txt` — aí ele empacota sem enxergar as libs do projeto, mesmo que elas
   estejam instaladas "em algum lugar". `python -m PyInstaller` garante que o empacotamento
   roda com o mesmo interpretador (e mesmo site-packages) que você já ativou.
-- `--onefile`: gera um único `md++.exe` em vez de uma pasta com vários arquivos.
+- `--onedir` (em vez de `--onefile`): gera uma pasta `dist/md++/` com `md++.exe` e todas as
+  dependências (`.dll`, `.pyd`, dados) como arquivos ao lado, em vez de compactar tudo num
+  único `.exe` que se autoextrai pra uma pasta temporária toda vez que abre. Fica mais
+  rápido pra iniciar e mais fácil de inspecionar o que foi empacotado.
 - `--windowed`: não abre um console junto com a janela do app.
 - `--paths src`: o `main.py` só adiciona `src/` ao `sys.path` em tempo de execução, mas o
   PyInstaller decide o que empacotar a partir de uma análise estática que roda *antes*
@@ -57,11 +60,16 @@ python -m PyInstaller --noconfirm --onefile --windowed --name "md++" --paths src
   `tables`, `sane_lists`) dinamicamente por nome de módulo, algo que a análise estática do
   PyInstaller não enxerga sozinha — sem essa flag o preview quebra com
   `ModuleNotFoundError: No module named 'markdown.extensions.fenced_code'`.
-- `--collect-all tkhtmlview`: garantia extra para o widget de preview ser empacotado por
-  completo (módulo, submódulos e eventuais dados).
+- `--collect-all tkinterweb --collect-all tkinterweb_tkhtml`: o preview renderiza HTML/CSS
+  de verdade via o motor **Tkhtml3**, distribuído como um binário nativo
+  (`libTkhtml3.0.dll` no Windows) dentro do pacote `tkinterweb_tkhtml`. Esse binário é
+  carregado em runtime via `os.listdir` + `load` do Tcl, não por `import` do Python — a
+  análise estática do PyInstaller não vê isso sozinha, então sem essas flags o `.exe` abre
+  mas o preview fica em branco ou trava ao carregar HTML.
 
-O executável fica em `dist/md++.exe`. As pastas `build/` e `dist/` geradas nesse processo
-já estão no `.gitignore`, não sobem para o repositório.
+A pasta final fica em `dist/md++/` (com `md++.exe` na raiz dela). As pastas `build/` e
+`dist/` geradas nesse processo já estão no `.gitignore`, não sobem para o repositório. Pra
+distribuir, zipe a pasta `dist/md++/` inteira — não só o `.exe`.
 
 Para adicionar um ícone customizado, inclua `--icon=caminho\para\icone.ico` no comando.
 
@@ -72,7 +80,7 @@ tem certeza que instalou. Quase sempre é ambiente errado — confirme com:
 
 ```
 python -c "import sys; print(sys.executable)"
-python -m pip show tkhtmlview
+python -m pip show tkinterweb
 ```
 
 Se o `sys.executable` não apontar pro Python do venv onde as libs estão instaladas, ative
