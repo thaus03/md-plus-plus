@@ -23,36 +23,57 @@ APP_TITLE = "md++"
 FILETYPES = [("Markdown", "*.md *.markdown"), ("Todos os arquivos", "*.*")]
 MARKDOWN_EXTENSIONS = ["fenced_code", "tables", "sane_lists"]
 
-PREVIEW_STYLE = """
-body {
-    background-color: #1e1e1e;
-    color: #dcdcdc;
+PREVIEW_PALETTES = {
+    "dark": {
+        "bg": "#1e1e1e", "fg": "#dcdcdc", "heading": "#ffffff",
+        "border": "#3a3a3a", "code_bg": "#2d2d2d", "code_fg": "#d4d4d4",
+        "th_bg": "#2a2a2a", "link": "#4ea1ff",
+        "quote_border": "#4a4a4a", "quote_fg": "#b0b0b0",
+    },
+    "light": {
+        "bg": "#ffffff", "fg": "#1f1f1f", "heading": "#000000",
+        "border": "#d0d7de", "code_bg": "#f6f8fa", "code_fg": "#1f2328",
+        "th_bg": "#f0f1f2", "link": "#0969da",
+        "quote_border": "#d0d7de", "quote_fg": "#59636e",
+    },
+}
+
+PREVIEW_STYLE_TEMPLATE = """
+body {{
+    background-color: {bg};
+    color: {fg};
     font-family: "Segoe UI", Calibri, sans-serif;
     font-size: 14px;
     line-height: 1.55;
     padding: 4px 18px 18px 18px;
-}
-h1, h2, h3, h4, h5, h6 { color: #ffffff; }
-h1 { border-bottom: 1px solid #3a3a3a; padding-bottom: 6px; }
-code {
+}}
+h1, h2, h3, h4, h5, h6 {{ color: {heading}; }}
+h1 {{ border-bottom: 1px solid {border}; padding-bottom: 6px; }}
+code {{
     font-family: Consolas, "Courier New", monospace;
-    background-color: #2d2d2d;
-    color: #d4d4d4;
+    background-color: {code_bg};
+    color: {code_fg};
     padding: 1px 4px;
-}
-pre { background-color: #2d2d2d; padding: 10px; }
-pre code { background-color: transparent; padding: 0; }
-table { border-collapse: collapse; margin: 10px 0; }
-th, td { border: 1px solid #3a3a3a; padding: 6px 12px; text-align: left; }
-th { background-color: #2a2a2a; }
-a { color: #4ea1ff; }
-blockquote {
-    border-left: 3px solid #4a4a4a;
+}}
+pre {{ background-color: {code_bg}; padding: 10px; }}
+pre code {{ background-color: transparent; padding: 0; }}
+table {{ border-collapse: collapse; margin: 10px 0; }}
+th, td {{ border: 1px solid {border}; padding: 6px 12px; text-align: left; }}
+th {{ background-color: {th_bg}; }}
+a {{ color: {link}; }}
+blockquote {{
+    border-left: 3px solid {quote_border};
     margin-left: 0;
     padding-left: 12px;
-    color: #b0b0b0;
-}
+    color: {quote_fg};
+}}
 """
+
+
+def build_preview_style(appearance_mode: str) -> str:
+    """Monta o CSS do preview para o modo de aparência atual ("Dark"/"Light")."""
+    key = "dark" if appearance_mode.lower() == "dark" else "light"
+    return PREVIEW_STYLE_TEMPLATE.format(**PREVIEW_PALETTES[key])
 
 
 def read_text(path: str) -> str:
@@ -97,6 +118,11 @@ class MdPlusPlusApp(ctk.CTk):
         self.mode_button = ctk.CTkButton(toolbar, text="Visualizar", width=100, command=self.toggle_mode)
         self.mode_button.pack(side="left", padx=4, pady=4)
 
+        self.theme_menu = ctk.CTkOptionMenu(
+            toolbar, values=["Sistema", "Claro", "Escuro"], width=110, command=self._on_theme_change
+        )
+        self.theme_menu.pack(side="right", padx=4, pady=4)
+
     def _build_editor(self):
         self.editor_container = ctk.CTkFrame(self, fg_color="transparent")
         self.editor_container.pack(side="top", fill="both", expand=True, padx=8, pady=(0, 8))
@@ -135,10 +161,16 @@ class MdPlusPlusApp(ctk.CTk):
         if self.mode == "preview":
             self._render_preview()
 
+    def _on_theme_change(self, choice: str):
+        modes = {"Sistema": "system", "Claro": "light", "Escuro": "dark"}
+        ctk.set_appearance_mode(modes[choice])
+        self._refresh_preview_if_active()
+
     def _render_preview(self):
         content = self.textbox.get("1.0", "end-1c")
         body = markdown.markdown(content, extensions=MARKDOWN_EXTENSIONS)
-        self.preview.load_html(f"<style>{PREVIEW_STYLE}</style>{body}")
+        style = build_preview_style(ctk.get_appearance_mode())
+        self.preview.load_html(f"<style>{style}</style>{body}")
 
     def _on_modified(self, _event=None):
         widget = self.textbox._textbox

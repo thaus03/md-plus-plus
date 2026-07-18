@@ -28,7 +28,9 @@ Enquanto o app for pequeno, não dividir em mais módulos/camadas do que o neces
 
 Já implementado: alternância edição/preview (botão na toolbar, renderiza com `markdown` +
 `tkinterweb`, motor Tkhtml3 — trocado do `tkhtmlview` inicial por falta de suporte real a
-CSS/tabelas) e caminho absoluto na barra de título.
+CSS/tabelas), caminho absoluto na barra de título, undo, abertura por argumento de linha
+de comando e tema Sistema/Claro/Escuro (seletor na toolbar; o CSS do preview acompanha o
+modo via `build_preview_style`).
 
 ## Versionamento
 
