@@ -1,0 +1,33 @@
+name: build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instala dependências
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Checagem de sintaxe
+        run: python -m compileall src main.py
+
+      - name: Compila o executável
+        run: python -m PyInstaller --noconfirm --onedir --windowed --name "md++" --paths src --collect-all customtkinter --collect-all markdown --collect-all tkinterweb --collect-all tkinterweb_tkhtml main.py
+
+      - name: Publica artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: md-plus-plus-windows
+          path: dist/md++/
+          if-no-files-found: error
