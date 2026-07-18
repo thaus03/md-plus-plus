@@ -7,8 +7,12 @@ Alternativa mais leve ao VS Code para quem só precisa visualizar e editar `.md`
 ## Funcionalidades
 
 - Abrir, editar, salvar e criar arquivos `.md`.
-- Botão **Visualizar/Editar** na barra de ferramentas para alternar entre o texto puro e
-  o Markdown renderizado (títulos, negrito, itálico, listas, código, tabelas, links).
+- Botão **Visualizar/Editar** (Ctrl+E) para alternar entre o texto puro e o Markdown
+  renderizado (títulos, negrito, itálico, listas, código, tabelas, links — links abrem no
+  navegador do sistema).
+- Menu **Arquivo / Exibir / Ajuda**, menu de contexto no botão direito e toolbar com
+  ícones.
+- Tema **Sistema / Claro / Escuro**, com o preview acompanhando.
 - Barra de título mostra o caminho absoluto do arquivo aberto.
 - Desfazer/refazer no editor (Ctrl+Z / Ctrl+Y).
 - Abre arquivo passado como argumento (`md++.exe caminho\arquivo.md`) — permite associar

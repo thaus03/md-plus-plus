@@ -16,11 +16,18 @@ if sys.stdout is None or sys.stderr is None:
     if sys.stderr is None:
         sys.stderr = _log
 
+import tkinter as tk
+
 import customtkinter as ctk
 import markdown
+from PIL import Image
 from tkinterweb import HtmlFrame
 
+from mdpp import __version__
+
 APP_TITLE = "md++"
+REPO_URL = "https://github.com/thaus03/md-plus-plus"
+WIKI_URL = "https://github.com/thaus03/md-plus-plus/wiki"
 FILETYPES = [("Markdown", "*.md *.markdown"), ("Todos os arquivos", "*.*")]
 MARKDOWN_EXTENSIONS = ["fenced_code", "tables", "sane_lists"]
 
@@ -77,6 +84,23 @@ def build_preview_style(appearance_mode: str) -> str:
     return PREVIEW_STYLE_TEMPLATE.format(**PREVIEW_PALETTES[key])
 
 
+def asset_path(name: str) -> str:
+    # No .exe os assets são incluídos via --add-data "src/mdpp/assets;mdpp/assets"
+    # e ficam sob sys._MEIPASS; em desenvolvimento, ao lado deste arquivo.
+    if hasattr(sys, "_MEIPASS"):
+        return os.path.join(sys._MEIPASS, "mdpp", "assets", name)
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", name)
+
+
+def load_icon(name: str, size: int = 18) -> ctk.CTkImage:
+    """Ícone da toolbar com variante para cada tema (sufixos _l/_d dos PNGs)."""
+    return ctk.CTkImage(
+        light_image=Image.open(asset_path(f"{name}_l.png")),
+        dark_image=Image.open(asset_path(f"{name}_d.png")),
+        size=(size, size),
+    )
+
+
 def read_text(path: str) -> str:
     """Lê o arquivo tentando UTF-8 (com ou sem BOM) e caindo para CP1252,
     encoding comum em .md antigos salvos no Windows."""
@@ -100,29 +124,112 @@ class MdPlusPlusApp(ctk.CTk):
 
         self.title(APP_TITLE)
         self.geometry("900x650")
+        # wm_iconbitmap (não o alias iconbitmap): o alias estático do tkinter pula o
+        # override do CTk, que então trocaria nosso ícone pelo dele ~200ms depois.
+        self.wm_iconbitmap(asset_path("mdpp.ico"))
 
-        self._build_menu()
+        self._build_menubar()
+        self._build_toolbar()
         self._build_editor()
+        self._build_context_menu()
         self._update_title()
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
-    def _build_menu(self):
+    def _build_menubar(self):
+        menubar = tk.Menu(self)
+
+        arquivo = tk.Menu(menubar, tearoff=0)
+        arquivo.add_command(label="Novo", accelerator="Ctrl+N", command=self.new_file)
+        arquivo.add_command(label="Abrir...", accelerator="Ctrl+O", command=self.open_file)
+        arquivo.add_separator()
+        arquivo.add_command(label="Salvar", accelerator="Ctrl+S", command=self.save_file)
+        arquivo.add_command(label="Salvar como...", command=self.save_file_as)
+        arquivo.add_separator()
+        arquivo.add_command(label="Sair", command=self.on_close)
+        menubar.add_cascade(label="Arquivo", menu=arquivo)
+
+        exibir = tk.Menu(menubar, tearoff=0)
+        exibir.add_command(
+            label="Alternar edição/visualização", accelerator="Ctrl+E", command=self.toggle_mode
+        )
+        tema = tk.Menu(exibir, tearoff=0)
+        for choice in ("Sistema", "Claro", "Escuro"):
+            tema.add_command(label=choice, command=lambda c=choice: self._select_theme(c))
+        exibir.add_cascade(label="Tema", menu=tema)
+        menubar.add_cascade(label="Exibir", menu=exibir)
+
+        ajuda = tk.Menu(menubar, tearoff=0)
+        ajuda.add_command(label="Wiki no GitHub", command=lambda: webbrowser.open(WIKI_URL))
+        ajuda.add_command(label="Repositório", command=lambda: webbrowser.open(REPO_URL))
+        ajuda.add_separator()
+        ajuda.add_command(
+            label="Sobre o md++",
+            command=lambda: messagebox.showinfo(
+                APP_TITLE, f"md++ {__version__}\nEditor leve de Markdown para Windows.\n{REPO_URL}"
+            ),
+        )
+        menubar.add_cascade(label="Ajuda", menu=ajuda)
+
+        self.config(menu=menubar)
+
+    def _build_toolbar(self):
         toolbar = ctk.CTkFrame(self, height=36)
         toolbar.pack(side="top", fill="x")
 
-        ctk.CTkButton(toolbar, text="Abrir", width=90, command=self.open_file).pack(side="left", padx=4, pady=4)
-        ctk.CTkButton(toolbar, text="Salvar", width=90, command=self.save_file).pack(side="left", padx=4, pady=4)
-        ctk.CTkButton(toolbar, text="Salvar como", width=110, command=self.save_file_as).pack(side="left", padx=4, pady=4)
-        ctk.CTkButton(toolbar, text="Novo", width=90, command=self.new_file).pack(side="left", padx=4, pady=4)
+        buttons = [
+            ("Novo", "new", self.new_file),
+            ("Abrir", "open", self.open_file),
+            ("Salvar", "save", self.save_file),
+            ("Salvar como", "save_as", self.save_file_as),
+        ]
+        for text, icon, command in buttons:
+            ctk.CTkButton(
+                toolbar, text=text, image=load_icon(icon), compound="left", width=110, command=command
+            ).pack(side="left", padx=4, pady=4)
 
-        self.mode_button = ctk.CTkButton(toolbar, text="Visualizar", width=100, command=self.toggle_mode)
+        self._icon_preview = load_icon("preview")
+        self._icon_edit = load_icon("edit")
+        self.mode_button = ctk.CTkButton(
+            toolbar, text="Visualizar", image=self._icon_preview, compound="left", width=120,
+            command=self.toggle_mode,
+        )
         self.mode_button.pack(side="left", padx=4, pady=4)
 
         self.theme_menu = ctk.CTkOptionMenu(
             toolbar, values=["Sistema", "Claro", "Escuro"], width=110, command=self._on_theme_change
         )
         self.theme_menu.pack(side="right", padx=4, pady=4)
+
+    def _build_context_menu(self):
+        self.context_menu = tk.Menu(self, tearoff=0)
+        self.context_menu.add_command(label="Desfazer", accelerator="Ctrl+Z", command=lambda: self._text_event("<<Undo>>"))
+        self.context_menu.add_command(label="Refazer", accelerator="Ctrl+Y", command=lambda: self._text_event("<<Redo>>"))
+        self.context_menu.add_separator()
+        self.context_menu.add_command(label="Recortar", accelerator="Ctrl+X", command=lambda: self._text_event("<<Cut>>"))
+        self.context_menu.add_command(label="Copiar", accelerator="Ctrl+C", command=lambda: self._text_event("<<Copy>>"))
+        self.context_menu.add_command(label="Colar", accelerator="Ctrl+V", command=lambda: self._text_event("<<Paste>>"))
+        self.context_menu.add_separator()
+        self.context_menu.add_command(label="Selecionar tudo", accelerator="Ctrl+A", command=lambda: self._text_event("<<SelectAll>>"))
+        self.context_menu.add_separator()
+        self.context_menu.add_command(label="Alternar edição/visualização", accelerator="Ctrl+E", command=self.toggle_mode)
+        self.textbox.bind("<Button-3>", self._show_context_menu)
+
+    def _show_context_menu(self, event):
+        try:
+            self.context_menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            self.context_menu.grab_release()
+
+    def _text_event(self, event_name: str):
+        try:
+            self.textbox._textbox.event_generate(event_name)
+        except tk.TclError:
+            pass  # ex: Desfazer sem nada na pilha de undo
+
+    def _select_theme(self, choice: str):
+        self.theme_menu.set(choice)
+        self._on_theme_change(choice)
 
     def _build_editor(self):
         self.editor_container = ctk.CTkFrame(self, fg_color="transparent")
@@ -142,6 +249,7 @@ class MdPlusPlusApp(ctk.CTk):
         self.bind_all("<Control-o>", lambda e: self.open_file())
         self.bind_all("<Control-s>", lambda e: self.save_file())
         self.bind_all("<Control-n>", lambda e: self.new_file())
+        self.bind_all("<Control-e>", lambda e: self.toggle_mode())
 
     def toggle_mode(self):
         if self.mode == "edit":
@@ -154,13 +262,13 @@ class MdPlusPlusApp(ctk.CTk):
         self.textbox.pack_forget()
         self.preview.pack(side="top", fill="both", expand=True)
         self.mode = "preview"
-        self.mode_button.configure(text="Editar")
+        self.mode_button.configure(text="Editar", image=self._icon_edit)
 
     def _show_editor(self):
         self.preview.pack_forget()
         self.textbox.pack(side="top", fill="both", expand=True)
         self.mode = "edit"
-        self.mode_button.configure(text="Visualizar")
+        self.mode_button.configure(text="Visualizar", image=self._icon_preview)
         self.textbox.focus_set()
 
     def _refresh_preview_if_active(self):
