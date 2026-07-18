@@ -1,5 +1,6 @@
 import os
 import sys
+import webbrowser
 from tkinter import filedialog, messagebox
 
 # Builds com --windowed não têm console: sys.stdout/stderr ficam None e qualquer
@@ -131,7 +132,12 @@ class MdPlusPlusApp(ctk.CTk):
         self.textbox.pack(side="top", fill="both", expand=True)
         self.textbox.bind("<<Modified>>", self._on_modified)
 
-        self.preview = HtmlFrame(self.editor_container, messages_enabled=False, javascript_enabled=False)
+        self.preview = HtmlFrame(
+            self.editor_container,
+            messages_enabled=False,
+            javascript_enabled=False,
+            on_link_click=self._on_preview_link_click,
+        )
 
         self.bind_all("<Control-o>", lambda e: self.open_file())
         self.bind_all("<Control-s>", lambda e: self.save_file())
@@ -160,6 +166,12 @@ class MdPlusPlusApp(ctk.CTk):
     def _refresh_preview_if_active(self):
         if self.mode == "preview":
             self._render_preview()
+
+    def _on_preview_link_click(self, url: str):
+        # Sem este callback o default do tkinterweb é load_url: o próprio widget
+        # navega e tenta renderizar a página externa dentro do preview.
+        if url.startswith(("http://", "https://")):
+            webbrowser.open(url)
 
     def _on_theme_change(self, choice: str):
         modes = {"Sistema": "system", "Claro": "light", "Escuro": "dark"}
