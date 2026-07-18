@@ -2,13 +2,18 @@ import os
 import sys
 from tkinter import filedialog, messagebox
 
-# Builds com --windowed não têm console: sys.stdout/stderr ficam None, e o
-# customtkinter escreve um aviso em stderr no import, o que quebra o app antes
-# da janela abrir se não houver um stream (mesmo que descartável) pra receber.
-if sys.stdout is None:
-    sys.stdout = open(os.devnull, "w")
-if sys.stderr is None:
-    sys.stderr = open(os.devnull, "w")
+# Builds com --windowed não têm console: sys.stdout/stderr ficam None e qualquer
+# write (ex: aviso do customtkinter durante o import) derruba o app. Redireciona
+# para um arquivo de log em vez de descartar — tracebacks em produção precisam
+# sobreviver em algum lugar pra dar pra diagnosticar depois.
+if sys.stdout is None or sys.stderr is None:
+    _log_dir = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "mdpp")
+    os.makedirs(_log_dir, exist_ok=True)
+    _log = open(os.path.join(_log_dir, "mdpp.log"), "a", buffering=1, encoding="utf-8")
+    if sys.stdout is None:
+        sys.stdout = _log
+    if sys.stderr is None:
+        sys.stderr = _log
 
 import customtkinter as ctk
 import markdown
@@ -48,6 +53,19 @@ blockquote {
     color: #b0b0b0;
 }
 """
+
+
+def read_text(path: str) -> str:
+    """Lê o arquivo tentando UTF-8 (com ou sem BOM) e caindo para CP1252,
+    encoding comum em .md antigos salvos no Windows."""
+    with open(path, "rb") as f:
+        raw = f.read()
+    for encoding in ("utf-8-sig", "cp1252"):
+        try:
+            return raw.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    return raw.decode("utf-8", errors="replace")
 
 
 class MdPlusPlusApp(ctk.CTk):
@@ -141,10 +159,20 @@ class MdPlusPlusApp(ctk.CTk):
             APP_TITLE, "Há alterações não salvas. Deseja descartá-las?"
         )
 
+    def _set_content(self, content: str):
+        self.textbox.delete("1.0", "end")
+        if content:
+            self.textbox.insert("1.0", content)
+        widget = self.textbox._textbox
+        # delete/insert programáticos também disparam <<Modified>>, e o evento é
+        # processado depois deste método — sem zerar o flag aqui, todo arquivo
+        # recém-aberto nasceria marcado como modificado (asterisco no título).
+        widget.edit_modified(False)
+
     def new_file(self):
         if not self._confirm_discard_changes():
             return
-        self.textbox.delete("1.0", "end")
+        self._set_content("")
         self.current_path = None
         self.dirty = False
         self._update_title()
@@ -156,10 +184,15 @@ class MdPlusPlusApp(ctk.CTk):
         path = filedialog.askopenfilename(filetypes=FILETYPES)
         if not path:
             return
-        with open(path, "r", encoding="utf-8") as f:
-            content = f.read()
-        self.textbox.delete("1.0", "end")
-        self.textbox.insert("1.0", content)
+        self.load_file(path)
+
+    def load_file(self, path: str):
+        try:
+            content = read_text(path)
+        except OSError as exc:
+            messagebox.showerror(APP_TITLE, f"Não foi possível abrir o arquivo:\n{exc}")
+            return
+        self._set_content(content)
         self.current_path = path
         self.dirty = False
         self._update_title()
@@ -179,8 +212,12 @@ class MdPlusPlusApp(ctk.CTk):
 
     def _write_to(self, path: str):
         content = self.textbox.get("1.0", "end-1c")
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(content)
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(content)
+        except OSError as exc:
+            messagebox.showerror(APP_TITLE, f"Não foi possível salvar o arquivo:\n{exc}")
+            return
         self.current_path = path
         self.dirty = False
         self._update_title()
