@@ -10,6 +10,11 @@ Alternativa mais leve ao VS Code para quem só precisa visualizar e editar `.md`
 - Botão **Visualizar/Editar** na barra de ferramentas para alternar entre o texto puro e
   o Markdown renderizado (títulos, negrito, itálico, listas, código, tabelas, links).
 - Barra de título mostra o caminho absoluto do arquivo aberto.
+- Desfazer/refazer no editor (Ctrl+Z / Ctrl+Y).
+- Abre arquivo passado como argumento (`md++.exe caminho\arquivo.md`) — permite associar
+  `.md` ao md++ no "Abrir com" do Windows.
+- Aceita arquivos em UTF-8 (com ou sem BOM) e CP1252 (encoding comum em `.md` antigos
+  do Windows); ao salvar, grava sempre em UTF-8.
 
 ## Requisitos
 
