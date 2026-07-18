@@ -23,7 +23,7 @@ jobs:
         run: python -m compileall src main.py
 
       - name: Compila o executável
-        run: python -m PyInstaller --noconfirm --onedir --windowed --name "md++" --paths src --collect-all customtkinter --collect-all markdown --collect-all tkinterweb --collect-all tkinterweb_tkhtml main.py
+        run: python -m PyInstaller --noconfirm --onedir --windowed --name "md++" --paths src --icon "src/mdpp/assets/mdpp.ico" --add-data "src/mdpp/assets;mdpp/assets" --collect-all customtkinter --collect-all markdown --collect-all tkinterweb --collect-all tkinterweb_tkhtml main.py
 
       - name: Publica artifact
         uses: actions/upload-artifact@v4
