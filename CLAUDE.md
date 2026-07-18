@@ -43,3 +43,5 @@ release no repo**, o log de commits e PRs é a fonte da verdade.
 - Não fazer commit/push sem o usuário pedir explicitamente nesta sessão.
 - Não criar arquivos de documentação de produto/arquitetura soltos neste repo; esse
   contexto é mantido fora daqui.
+- Doc de build do executável vive na Wiki do GitHub (página "Gerar executável
+  (Windows)"), não no README — mudanças no processo de build atualizam a Wiki.
