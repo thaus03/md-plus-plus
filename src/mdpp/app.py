@@ -101,7 +101,7 @@ class MdPlusPlusApp(ctk.CTk):
         self.editor_container = ctk.CTkFrame(self, fg_color="transparent")
         self.editor_container.pack(side="top", fill="both", expand=True, padx=8, pady=(0, 8))
 
-        self.textbox = ctk.CTkTextbox(self.editor_container, wrap="word", font=("Consolas", 13))
+        self.textbox = ctk.CTkTextbox(self.editor_container, wrap="word", font=("Consolas", 13), undo=True)
         self.textbox.pack(side="top", fill="both", expand=True)
         self.textbox.bind("<<Modified>>", self._on_modified)
 
@@ -168,6 +168,7 @@ class MdPlusPlusApp(ctk.CTk):
         # processado depois deste método — sem zerar o flag aqui, todo arquivo
         # recém-aberto nasceria marcado como modificado (asterisco no título).
         widget.edit_modified(False)
+        widget.edit_reset()
 
     def new_file(self):
         if not self._confirm_discard_changes():
@@ -231,6 +232,9 @@ def main():
     ctk.set_appearance_mode("system")
     ctk.set_default_color_theme("blue")
     app = MdPlusPlusApp()
+    # Arquivo passado por argumento (ex: "Abrir com" do Windows / md++.exe arquivo.md)
+    if len(sys.argv) > 1:
+        app.load_file(sys.argv[1])
     app.mainloop()
 
 
