@@ -17,7 +17,12 @@ precisa visualizar/editar `.md` sem o peso de uma IDE completa.
 ```
 main.py            # launcher fino
 src/mdpp/app.py    # janela principal (CTk), toda a lógica da UI hoje mora aqui
+src/mdpp/assets/   # ícones da toolbar (PNG _l/_d por tema) e mdpp.ico do app
 ```
+
+Assets entram no `.exe` via `--add-data "src/mdpp/assets;mdpp/assets"` (resolvidos em
+runtime por `asset_path()`, que trata dev vs congelado). Ícones novos: gerar PNG 64px em
+par claro/escuro seguindo o padrão `nome_l.png`/`nome_d.png`.
 
 Enquanto o app for pequeno, não dividir em mais módulos/camadas do que o necessário.
 
@@ -26,11 +31,13 @@ Enquanto o app for pequeno, não dividir em mais módulos/camadas do que o neces
 - Busca dentro do arquivo
 - Atalhos de teclado adicionais
 
-Já implementado: alternância edição/preview (botão na toolbar, renderiza com `markdown` +
+Já implementado: alternância edição/preview (Ctrl+E, renderiza com `markdown` +
 `tkinterweb`, motor Tkhtml3 — trocado do `tkhtmlview` inicial por falta de suporte real a
-CSS/tabelas), caminho absoluto na barra de título, undo, abertura por argumento de linha
-de comando e tema Sistema/Claro/Escuro (seletor na toolbar; o CSS do preview acompanha o
-modo via `build_preview_style`).
+CSS/tabelas; links externos abrem no navegador via `on_link_click`), caminho absoluto na
+barra de título, undo, abertura por argumento de linha de comando, tema
+Sistema/Claro/Escuro (seletor na toolbar + menu Exibir; CSS do preview acompanha via
+`build_preview_style`), menubar nativa `tk.Menu` (Arquivo/Exibir/Ajuda), menu de contexto
+no botão direito e toolbar com ícones (`CTkImage` claro/escuro).
 
 ## Versionamento
 
